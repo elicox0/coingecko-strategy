@@ -1,0 +1,10 @@
+# data
+*.feather
+*.json
+*.zip
+*.csv
+*.pdf
+
+# environment
+venv/
+venv/*
