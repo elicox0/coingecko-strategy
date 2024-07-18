@@ -79,7 +79,7 @@ class ApiCaller():
         """
         seconds_between_calls = self._monthly_remaining_calls / self.get_seconds_left_in_month()
         self.seconds_between_calls = max(seconds_between_calls, self.MIN_SECONDS_BETWEEN_CALLS)
-        print(self.seconds_between_calls)
+        print(f"Waiting {self.seconds_between_calls} seconds between calls")
 
     def __call__(self, endpoint) -> None:
         response = requests.get(
@@ -95,11 +95,11 @@ class ApiCaller():
                 })
         self.set_monthly_remaining_calls(self._monthly_remaining_calls - 1)
         # time.sleep(self.seconds_between_calls)
-        time.sleep(10)
         if response.status_code == 200:
             self.write_content_to_db(response.json())
-            return
-        raise HTTPError(f"Received response {response.status_code}")
+        else:
+            raise HTTPError(f"Received response {response.status_code}")
+        time.sleep(10)
 
     def write_content_to_db(self, content:bytes) -> None:
         # obj = json.dumps(content)
@@ -116,14 +116,16 @@ class ApiCaller():
         ]
         query = "INSERT INTO MARKET VALUES (" + "?,"*23 + "?)" 
         for coin in obj:
+            print("Adding response to database")
             self.cursor.execute(query, tuple(str(coin[key]) for key in columns))
+        self.con.commit()
 
 if __name__ == "__main__":
     input = int(sys.argv[1]) if len(sys.argv) > 1 else None
     caller = ApiCaller("./remaining_calls.txt", input)
+    caller.cursor.execute("INSERT INTO MARKET VALUES (" + "?,"*23 + "?)", [123]*24)
     try:
-        while True:
-            content = caller("https://api.coingecko.com/api/v3/coins/markets")
-            print(content)
+        while True: caller("https://api.coingecko.com/api/v3/coins/markets")
     finally:
         caller.write_monthly_remaining_calls()
+        caller.con.close()
