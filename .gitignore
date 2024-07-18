@@ -1,9 +1,14 @@
+# api key
+load_api_key.sh
+
 # data
+*.txt
 *.feather
 *.json
 *.zip
 *.csv
 *.pdf
+*.db
 
 # environment
 venv/
